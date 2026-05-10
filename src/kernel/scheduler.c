@@ -66,21 +66,21 @@ int task_create(const char *name, void (*func)(void), unsigned int priority)
 static void task1(void) {
     while (1) {
         uart_puts("task1 (prio 0 - HIGH) running\n");
-        for (int i = 0; i < 4000000; i++) asm volatile("nop");
+        task_sleep(5);    /* 5 ticks × 100ms = 0.5s */
     }
 }
 
 static void task2(void) {
     while (1) {
         uart_puts("task2 (prio 1 - MED)  running\n");
-        for (int i = 0; i < 4000000; i++) asm volatile("nop");
+        task_sleep(10);   /* 10 ticks × 100ms = 1.0s */
     }
 }
 
 static void task3(void) {
     while (1) {
         uart_puts("task3 (prio 2 - LOW)  running\n");
-        for (int i = 0; i < 4000000; i++) asm volatile("nop");
+        task_sleep(20);   /* 20 ticks × 100ms = 2.0s */
     }
 }
 
@@ -120,7 +120,6 @@ void scheduler_init(void)
  * --------------------------------------------------------------- */
 unsigned long scheduler_switch_task(unsigned long old_sp)
 {
-    uart_puts("scheduler_switch_task");
     /* Step 1: save current stack pointer */
     tasks[current_task].sp = old_sp;
 
@@ -163,7 +162,6 @@ unsigned long scheduler_switch_task(unsigned long old_sp)
  * --------------------------------------------------------------- */
 void scheduler_tick(void)
 {
-    uart_puts("scheduler_tick");
     for (int i = 0; i < task_count; i++) {
         if (tasks[i].state == SLEEPING) {
             if (tasks[i].sleep_ticks > 0)
@@ -239,4 +237,15 @@ void scheduler_yield(void)
     /* Trigger SVC exception — vectors.s will save context and
      * call handle_irq(), which calls scheduler_switch_task().    */
     asm volatile("svc #0");
+}
+
+void task_sleep(unsigned long ticks)
+{
+    int current_task = scheduler_get_current_task();
+    
+    tasks[current_task].sleep_ticks = ticks;
+    
+    tasks[current_task].state = SLEEPING;
+    
+    scheduler_yield();
 }

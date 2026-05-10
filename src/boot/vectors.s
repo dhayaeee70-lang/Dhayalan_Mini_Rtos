@@ -19,7 +19,7 @@ vectors:
         /* 1. SAVE THE INTERRUPTED TASK'S STATE */
         /* Make room for 34 registers (x0-x30, PC, PSTATE) = 272 bytes */
         sub sp, sp, #272
-        
+
         stp x0, x1, [sp, #0]
         stp x2, x3, [sp, #16]
         stp x4, x5, [sp, #32]
@@ -35,7 +35,7 @@ vectors:
         stp x24, x25, [sp, #192]
         stp x26, x27, [sp, #208]
         stp x28, x29, [sp, #224]
-        
+
         /* Save Link Register (x30). Second slot is empty for 16-byte alignment */
         str x30, [sp, #240]
 
@@ -44,9 +44,9 @@ vectors:
         mrs x1, spsr_el1
         stp x0, x1, [sp, #256]
 
-        /* 2. CALL THE C SCHEDULER */
+        /* 2. CALL THE SVC HANDLER (voluntary yield — not a timer IRQ) */
         mov x0, sp                 /* Arg 1 (x0) = The old stack pointer */
-        bl handle_irq              /* C function returns the new stack pointer in x0 */
+        bl handle_svc              /* returns new stack pointer in x0 */
         
         mov sp, x0                 /* SWITCH THE CPU TO THE NEW TASK'S STACK! */
 

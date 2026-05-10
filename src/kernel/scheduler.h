@@ -40,6 +40,12 @@ unsigned long scheduler_get_task_priority(int id);
 /* Restore a task's priority back to its base_priority (undo inheritance) */
 void scheduler_restore_priority(int id);
 
+/* ----------------------------------------
+*  brief : Put the current exectuing task to sleep for given ticks
+*  params @ticks : ticks for which the task needs to sleep
+*  ---------------------------------------- */
+void task_sleep(unsigned long ticks);
+
 /* Voluntary yield: current task gives up CPU immediately.
  * Implemented as an ARM64 SVC #0 — triggers the SVC exception
  * which calls scheduler_switch_task() just like a timer IRQ. */

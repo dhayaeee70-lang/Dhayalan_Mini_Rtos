@@ -8,13 +8,13 @@ LDFLAGS = -T linker.ld -nostdlib
 
 # Source files
 BOOT_SRCS = src/boot/startup.s src/boot/vectors.s
-KERNEL_SRCS = src/kernel/main.c src/kernel/scheduler.c
+KERNEL_SRCS = src/kernel/main.c src/kernel/scheduler.c src/kernel/mutex.c
 DRIVER_SRCS = src/drivers/uart.c src/drivers/gic.c src/drivers/timer.c
 IRQ_SRCS = src/interrupt/irq_handler.c
 
 # Object files
 OBJS = build/startup.o build/vectors.o \
-       build/main.o build/scheduler.o \
+       build/main.o build/scheduler.o build/mutex.o \
        build/uart.o build/gic.o build/timer.o \
        build/irq_handler.o
 
@@ -42,6 +42,11 @@ build/main.o: src/kernel/main.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build/scheduler.o: src/kernel/scheduler.c
+	@mkdir -p build
+	@echo "Compiling $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/mutex.o: src/kernel/mutex.c
 	@mkdir -p build
 	@echo "Compiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@

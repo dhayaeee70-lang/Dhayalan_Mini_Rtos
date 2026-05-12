@@ -20,30 +20,34 @@ unsigned long *mmu_get_l0_table(void)
     return page_table_l0;
 }
 
+/* ---------------------------------------------------------------
+ * mmu_setup_pagetable
+ *   Identity map (VA == PA) for kernel + MMIO using 1GB block entries.
+ *
+ *   Memory map (QEMU virt):
+ *     0x00000000 – 0x3FFFFFFF  device memory (GIC @ 0x08000000, UART @ 0x09000000)
+ *     0x40000000 – 0x7FFFFFFF  normal RAM    (kernel loads at 0x40000000)
+ *
+ *   Page table structure:
+ *     L0[0] → L1 table
+ *     L1[0] → 1GB block @ 0x00000000 (device, nGnRnE)
+ *     L1[1] → 1GB block @ 0x40000000 (normal, WB cacheable)
+ * --------------------------------------------------------------- */
 void mmu_setup_pagetable(void)
 {
-    /* --- L0 entry 0: points to L1 table ---
-     * L0[0] covers VA 0x0000_0000 – 0x3FFF_FFFF (first 256GB slot)
-     * Bits [47:12] = physical address of L1 table
-     * Bits [1:0]   = 0b11 (valid table entry)
-     */
+    /* L0[0]: table entry pointing to L1 */
     page_table_l0[0] = ((unsigned long)page_table_l1)
                        | PTE_VALID
                        | PTE_TABLE;
 
-    /* --- L1 entry 0: 1GB block for device memory (GIC + UART) ---
-     * Covers PA 0x0000_0000 – 0x3FFF_FFFF
-     * Block entry: bit[1] = 0 (omit PTE_TABLE)
-     */
+    /* L1[0]: 1GB block — device memory (GIC + UART) */
     page_table_l1[0] = (0x00000000UL)
                        | PTE_VALID
                        | PTE_AF
                        | PTE_AP_RW
                        | ATTR_DEVICE;
 
-    /* --- L1 entry 1: 1GB block for normal RAM ---
-     * Covers PA 0x4000_0000 – 0x7FFF_FFFF
-     */
+    /* L1[1]: 1GB block — normal RAM */
     page_table_l1[1] = (0x40000000UL)
                        | PTE_VALID
                        | PTE_AF
